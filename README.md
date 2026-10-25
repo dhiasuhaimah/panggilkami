@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+HEAD
 # PanggilKami — Platform Marketplace Jasa Panggilan Lokal
 > **Tagline:** “Butuh Bantuan? PanggilKami.”  
 > **Wilayah Utama:** Solo Baru HTC, Sukoharjo, Kartasura, Solo Kota, dan sekitarnya.
