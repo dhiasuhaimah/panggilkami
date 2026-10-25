@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="id" data-bs-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PanggilKami — Jasa Suruh &amp; Asisten Harian Solo</title>
+<meta name="description" content="PanggilKami adalah platform jasa suruh dan asisten harian terpercaya di Solo: titip belanja, antar jemput, bersih kos, bersih WC, dan kurir serabutan.">
+<meta name="theme-color" content="#0A2342">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="style.css"></head>
+<body>
+
+<nav class="navbar navbar-dark sticky-top">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center gap-2 fw-bold" href="#" data-act="go" data-view="home" data-anchor="top">
+      <img data-img="logoMono" alt="Logo PanggilKami" class="brand-logo"><span>PanggilKami</span>
+    </a>
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-sm btn-outline-light rounded-pill" data-act="theme" aria-label="Ganti tema"><i class="bi bi-circle-half"></i></button>
+      <span id="navAuth" class="d-none d-lg-flex gap-2"></span>
+      <button class="navbar-toggler border-0 d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#menu" aria-label="Menu"><span class="navbar-toggler-icon"></span></button>
+    </div>
+    <div class="d-none d-lg-flex ms-4 me-auto gap-1" id="navLinks"></div>
+  </div>
+</nav>
+
+<div class="offcanvas offcanvas-start" tabindex="-1" id="menu" style="max-width:82vw">
+  <div class="offcanvas-header">
+    <div class="d-flex align-items-center gap-2 fw-bold fs-5"><img data-img="logoMono" alt="Logo PanggilKami" class="brand-logo"> PanggilKami</div>
+    <button class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body d-flex flex-column gap-1">
+    <div id="menuLinks" class="d-flex flex-column"></div>
+    <hr class="border-secondary">
+    <div id="menuAuth" class="d-grid gap-2"></div>
+    <button id="btnInstall" class="btn btn-outline-light mt-2 d-none"><i class="bi bi-download me-1"></i> Pasang Aplikasi</button>
+  </div>
+</div>
+
+
+
+<!-- ======================= HOME ======================= -->
+<main>
+<div class="view active" id="v-home">
+  <section class="hero" id="top">
+    <div class="hero-bg" id="heroBg" aria-hidden="true"></div>
+    <div class="container">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-7">
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            <span class="chip"><i class="bi bi-shield-check"></i> Amanah &amp; Terpercaya</span>
+            <span class="chip"><i class="bi bi-geo-alt"></i> Seluruh Wilayah Solo</span>
+          </div>
+          <h1 class="mb-3">Butuh Bantuan Cepat?<br><span style="color:var(--blue)">Serahkan pada PanggilKami.</span></h1>
+          <div class="hero-tagline">Urusan Anda, Tanggung Jawab Kami.</div>
+          <p class="lead mb-4">Layanan jasa suruh dan asisten harian untuk mahasiswa dan profesional di Solo. Titip belanja, antar jemput, bersih-bersih, hingga kurir serabutan — dikerjakan oleh tim lokal Solo. Khusus titip belanja, Anda dapat berkomunikasi langsung dengan penjual melalui chat atau video call.</p>
+          <div class="d-grid d-sm-flex gap-2">
+            <button class="btn btn-pk btn-lg-pk" data-act="go" data-view="home" data-anchor="pesan"><i class="bi bi-lightning-charge-fill me-1"></i> Pesan Sekarang</button>
+            <button class="btn btn-outline-light btn-lg-pk rounded-3 fw-bold" data-act="go" data-view="home" data-anchor="layanan">Lihat Layanan</button>
+          </div>
+          <div class="mt-4 d-flex align-items-center gap-3 flex-wrap">
+            <div class="stars fs-5" id="heroStars"></div>
+            <div class="small" id="heroRating" style="color:#cfe0f3"></div>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="pk-card p-4" style="background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.15)">
+            <h5 class="mb-3">Mengapa PanggilKami?</h5>
+            <div class="d-flex gap-3 mb-3"><i class="bi bi-chat-dots fs-3" style="color:var(--blue)"></i><div><strong>Konfirmasi Langsung dengan Penjual</strong><div class="small" style="color:#cfe0f3">Khusus titip belanja, Anda dapat berbicara dengan penjual melalui chat atau video call agar barang yang dibeli tepat sesuai keinginan.</div></div></div>
+            <div class="d-flex gap-3 mb-3"><i class="bi bi-receipt fs-3" style="color:var(--blue)"></i><div><strong>Transparan</strong><div class="small" style="color:#cfe0f3">Harga barang dibayar sesuai struk asli toko saat barang tiba.</div></div></div>
+            <div class="d-flex gap-3"><i class="bi bi-geo-alt fs-3" style="color:var(--blue)"></i><div><strong>Tim Lokal Solo</strong><div class="small" style="color:#cfe0f3">Mengenal wilayah, sehingga pengerjaan lebih cepat dan tepat.</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="layanan">
+    <div class="container">
+      <h2 class="section-title">Layanan PanggilKami</h2>
+      <p class="text-muted-pk mb-4">Mulai dari Rp 15.000. Pilih layanan untuk melihat rincian dan tahapan pengerjaan.</p>
+      <div class="row g-3" id="svcGrid"></div>
+    </div>
+  </section>
+
+  <section class="section pt-0">
+    <div class="container">
+      <h2 class="section-title">Cara Kerja</h2>
+      <p class="text-muted-pk mb-4">Tiga langkah sederhana dari pemesanan hingga selesai.</p>
+      <div class="row g-3">
+        <div class="col-md-4"><div class="pk-card p-3 d-flex gap-3 h-100"><div class="step-no">1</div><div><strong>Daftar &amp; Pesan</strong><div class="text-muted-pk small">Buat akun, pilih layanan, isi alamat dan detail pesanan, lalu bayar biaya jasa melalui QRIS.</div></div></div></div>
+        <div class="col-md-4"><div class="pk-card p-3 d-flex gap-3 h-100"><div class="step-no">2</div><div><strong>Konfirmasi via WhatsApp</strong><div class="text-muted-pk small">Setelah pembayaran terverifikasi, tim kami menghubungi Anda untuk memastikan detail pesanan.</div></div></div></div>
+        <div class="col-md-4"><div class="pk-card p-3 d-flex gap-3 h-100"><div class="step-no">3</div><div><strong>Pantau &amp; Selesai</strong><div class="text-muted-pk small">Pantau status pesanan secara langsung, lalu beri penilaian setelah pesanan selesai.</div></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section pt-0" id="janji">
+    <div class="container">
+      <div class="hero-eyebrow"><i class="bi bi-shield-check"></i> Komitmen Kami</div>
+      <h2 class="section-title">Janji PanggilKami</h2>
+      <p class="text-muted-pk mb-3">Standar layanan yang kami pegang pada setiap pesanan.</p>
+      <div class="slider" id="pSlider"></div>
+    </div>
+  </section>
+
+  <section class="section pt-0" id="testimoni">
+    <div class="container">
+      <div class="hero-eyebrow"><i class="bi bi-chat-quote"></i> Ulasan Pelanggan</div>
+      <h2 class="section-title">Apa Kata Mereka Tentang PanggilKami?</h2>
+      <p class="text-muted-pk mb-3" id="ratingLine"></p>
+      <div class="d-flex flex-wrap gap-2 align-items-center mb-3"><span class="rate-pill d-none" id="ratePill"></span><button type="button" class="btn btn-outline-pk btn-sm" data-act="writeReview"><i class="bi bi-pencil-square me-1"></i>Tulis Ulasan Anda</button></div>
+      <div class="slider" id="tSlider"></div>
+      <p class="quote-line">“Kepercayaan dibangun satu pesanan demi satu pesanan.”</p>
+    </div>
+  </section>
+
+  <section class="section pt-0" id="pesan">
+    <div class="container">
+      <div class="row justify-content-center"><div class="col-lg-8">
+        <div class="pk-card p-3 p-md-4">
+          <h2 class="section-title">Form Pesan Jasa</h2>
+          <p class="text-muted-pk">Lengkapi data berikut. Isian Anda tersimpan otomatis. Masuk atau daftar hanya diperlukan saat mengirim pesanan.</p>
+          <form id="orderForm" novalidate>
+            <div class="mb-3"><label class="form-label" for="oName">Nama</label><input class="form-control" id="oName" placeholder="Nama Anda" autocomplete="name"></div>
+            <div class="mb-3"><label class="form-label" for="oWa">No. HP <span class="text-muted-pk fw-normal">(WhatsApp aktif)</span></label><input class="form-control" id="oWa" inputmode="tel" placeholder="08xxxxxxxxxx" autocomplete="tel"><div class="form-text text-muted-pk">Nomor ini digunakan driver untuk konfirmasi pesanan.</div></div>
+            <div class="mb-3"><label class="form-label" for="oSvc">Jenis Layanan</label><select class="form-select" id="oSvc"></select></div>
+            <div class="mb-3 d-none" id="subWrap"><label class="form-label" for="oSub" id="subLabel">Rincian</label><select class="form-select" id="oSub"></select></div>
+            <div class="mb-3 d-none" id="hoursWrap"><label class="form-label" for="oHours">Durasi (jam)</label><select class="form-select" id="oHours"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></div>
+            <div class="mb-3"><label class="form-label" for="oDetail">Detail Order</label><textarea class="form-control" id="oDetail" rows="4" placeholder="Jelaskan sedetail mungkin…"></textarea></div>
+
+            <div class="mb-3 d-none" id="pickWrap">
+              <label class="form-label" id="pLabel" for="pText">Lokasi Jemput</label>
+              <input class="form-control" id="pText" placeholder="Ketik alamat atau nama tempat, lalu pilih dari daftar" autocomplete="off">
+              <div class="loc-sug d-none" id="pSug"></div>
+              <div class="d-flex flex-wrap gap-2 mt-2">
+                <button type="button" class="btn btn-sm btn-outline-pk" data-act="gps" data-t="p"><i class="bi bi-crosshair me-1"></i>Bagikan Lokasi Saya</button>
+                <button type="button" class="btn btn-sm btn-outline-pk" data-act="mapPrev" data-t="p"><i class="bi bi-map me-1"></i>Lihat Peta</button>
+              </div>
+              <div class="form-text text-muted-pk" id="pHint"></div>
+              <div class="map-prev d-none mt-2" id="pPrev"></div>
+            </div>
+            <div class="mb-3" id="destWrap">
+              <label class="form-label" id="dLabel" for="dText">Lokasi Tujuan</label>
+              <input class="form-control" id="dText" placeholder="Ketik alamat atau nama tempat, lalu pilih dari daftar" autocomplete="off">
+              <div class="loc-sug d-none" id="dSug"></div>
+              <div class="d-flex flex-wrap gap-2 mt-2">
+                <button type="button" class="btn btn-sm btn-outline-pk" data-act="gps" data-t="d"><i class="bi bi-crosshair me-1"></i>Bagikan Lokasi Saya</button>
+                <button type="button" class="btn btn-sm btn-outline-pk" data-act="mapPrev" data-t="d"><i class="bi bi-map me-1"></i>Lihat Peta</button>
+              </div>
+              <div class="form-text text-muted-pk" id="dHint"></div>
+              <div class="map-prev d-none mt-2" id="dPrev"></div>
+            </div>
+
+            <div class="mb-3"><label class="form-label" for="oWhen">Waktu <span class="text-muted-pk fw-normal">(tanggal &amp; jam)</span></label>
+              <input type="datetime-local" class="form-control" id="oWhen"><div class="mt-2"><button type="button" class="btn btn-sm btn-outline-pk" data-act="nowTime"><i class="bi bi-lightning-charge me-1"></i>Secepatnya</button></div></div>
+
+            <div class="mb-3"><label class="form-label">Metode Bayar</label>
+              <div class="pk-card p-3" style="box-shadow:none">
+                <div class="d-flex gap-3 align-items-start"><i class="bi bi-qr-code-scan fs-4" style="color:var(--blue)"></i><div><strong>Biaya jasa: QRIS</strong><div class="small text-muted-pk">Dibayar di website setelah pesanan dikirim. Nominal terkunci otomatis.</div></div></div>
+                <div id="goodsPay" class="d-none mt-3 pt-3" style="border-top:1px solid var(--line)">
+                  <div class="fw-semibold mb-2">Uang belanja barang <span class="text-muted-pk fw-normal">(khusus Titip Belanja)</span></div>
+                  <div class="d-flex gap-2 flex-wrap">
+                    <input type="radio" class="btn-check" name="oPayG" id="pgT" value="Tunai" checked><label class="btn btn-outline-pk" for="pgT"><i class="bi bi-cash-coin me-1"></i>Tunai</label>
+                    <input type="radio" class="btn-check" name="oPayG" id="pgR" value="Transfer"><label class="btn btn-outline-pk" for="pgR"><i class="bi bi-bank me-1"></i>Transfer</label>
+                  </div>
+                  <div class="form-text text-muted-pk" id="goodsHint"></div>
+                </div>
+              </div></div>
+
+            <div class="mb-3"><label class="form-label" for="oVoucher">Kode Voucher <span class="text-muted-pk fw-normal">(opsional)</span></label>
+              <div class="input-group"><input class="form-control" id="oVoucher" placeholder="Masukkan kode voucher" style="text-transform:uppercase"><button type="button" class="btn btn-outline-pk" id="btnVoucher">Pakai</button></div>
+              <div class="form-text" id="voucherMsg"></div></div>
+            <div class="notice mb-3" id="noticeBelanja">
+              <strong>⚠️ Penting — khusus Titip Belanja:</strong><br>
+              Biaya Rp 15.000 hanyalah <strong>biaya jasa</strong> dan belum termasuk harga barang. Setelah pembayaran jasa terverifikasi, driver akan menghubungi Anda melalui WhatsApp (<span class="WA_DISP"></span>) untuk mengonfirmasi total belanja. Harga barang dibayar sesuai struk asli toko saat barang tiba.
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-3 px-1"><span class="text-muted-pk">Biaya jasa</span><span class="price fs-5" id="feeLine">—</span></div>
+            <button class="btn btn-pk btn-lg-pk w-100" id="btnOrder" type="submit" disabled>Pesan Sekarang</button>
+            <div class="form-text text-center text-muted-pk mt-2" id="formHint"></div>
+          </form>
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="section pt-0" id="tentang">
+    <div class="container">
+      <div class="row g-3">
+        <div class="col-lg-6"><div class="pk-card p-3 p-md-4 h-100">
+          <div class="about-banner mb-3" data-bg="logoMock" role="img" aria-label="Logo PanggilKami"></div>
+          <h2 class="section-title">Tentang PanggilKami</h2>
+          <p class="text-muted-pk">PanggilKami adalah platform jasa suruh dan asisten harian terpercaya di Solo. Kami siap membantu Anda untuk titip belanja, antar jemput, bersih-bersih, hingga kurir serabutan. Seluruh layanan dikerjakan oleh tim lokal komunitas Solo.</p>
+          <hr style="border-color:var(--line)">
+          <h5><i class="bi bi-clock me-2" style="color:var(--blue)"></i>Jam Operasional</h5>
+          <p class="text-muted-pk mb-0">Setiap hari, 06.00 – 00.00 WIB. Konsultasi langsung melalui WhatsApp <strong class="WA_DISP"></strong>.</p>
+        </div></div>
+        <div class="col-lg-6"><div class="pk-card p-3 p-md-4 h-100">
+          <div class="about-banner mb-3" data-bg="office" style="min-height:200px;background-position:70% 30%" role="img" aria-label="Tim PanggilKami di kantor hub"></div>
+          <h5><i class="bi bi-building me-2" style="color:var(--blue)"></i>Kantor Hub Kami</h5>
+          <p class="text-muted-pk">Hartono Trade Center, Jl. Ir. Soekarno No. A21, Dusun I, Madegondo, Kecamatan Grogol, Kabupaten Sukoharjo, Jawa Tengah. Lokasi ini dikenal sebagai kawasan Solo Baru.</p>
+          <h5><i class="bi bi-pin-map-fill me-2" style="color:var(--blue)"></i>Jangkauan Wilayah</h5>
+          <p class="text-muted-pk mb-2">Kami melayani <strong>seluruh wilayah Solo</strong>:</p>
+          <div class="d-flex flex-wrap gap-2 mb-2">
+            <span class="chip" style="background:var(--card2);color:var(--text);border-color:var(--line)">Banjarsari</span>
+            <span class="chip" style="background:var(--card2);color:var(--text);border-color:var(--line)">Jebres</span>
+            <span class="chip" style="background:var(--card2);color:var(--text);border-color:var(--line)">Laweyan</span>
+            <span class="chip" style="background:var(--card2);color:var(--text);border-color:var(--line)">Pasar Kliwon</span>
+            <span class="chip" style="background:var(--card2);color:var(--text);border-color:var(--line)">Serengan</span>
+          </div>
+          <p class="small text-muted-pk mb-0">Termasuk kawasan penyangga: Solo Baru, Kartasura, Colomadu, Palur, dan Sukoharjo.</p>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section pt-0" id="bantuan">
+    <div class="container">
+      <h2 class="section-title">Bantuan / FAQ</h2>
+      <p class="text-muted-pk mb-3">Pertanyaan yang paling sering diajukan.</p>
+      <div class="accordion" id="faq">
+        <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button" data-bs-toggle="collapse" data-bs-target="#f1">Apakah Rp 15.000 sudah termasuk barang?</button></h2><div id="f1" class="accordion-collapse collapse show" data-bs-parent="#faq"><div class="accordion-body">Belum. Biaya tersebut hanya untuk jasa. Harga barang dikonfirmasi oleh driver melalui WhatsApp.</div></div></div>
+        <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#f2">Kapan saya membayar barangnya?</button></h2><div id="f2" class="accordion-collapse collapse" data-bs-parent="#faq"><div class="accordion-body">Harga barang dibayar saat barang tiba, sesuai struk asli toko (COD).</div></div></div>
+        <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#f3">Area layanan di mana saja?</button></h2><div id="f3" class="accordion-collapse collapse" data-bs-parent="#faq"><div class="accordion-body">Kami melayani seluruh wilayah Solo, mencakup Banjarsari, Jebres, Laweyan, Pasar Kliwon, dan Serengan, serta kawasan penyangga seperti Solo Baru, Kartasura, Colomadu, Palur, dan Sukoharjo.</div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="pt-5 pb-4">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-md-5">
+          <div class="foot-plate mb-3" data-bg="logoPlate" role="img" aria-label="Logo PanggilKami"></div>
+          <p class="small mb-0 text-center text-md-start" style="color:#b8cbe2">Platform jasa suruh dan asisten harian terpercaya di Solo.</p>
+        </div>
+        <div class="col-md-7">
+          <div class="mb-2"><i class="bi bi-geo-alt-fill me-2"></i><span class="small">Hartono Trade Center, Jl. Ir. Soekarno No. A21, Madegondo, Grogol, Sukoharjo, Jawa Tengah</span></div>
+          <div class="mb-2"><i class="bi bi-whatsapp me-2"></i><a href="#" class="WA_LINK"><span class="WA_DISP"></span></a></div>
+          <div class="mb-2"><i class="bi bi-clock me-2"></i><span class="small">Setiap hari, 06.00 – 00.00 WIB</span></div>
+          <div class="mb-2"><i class="bi bi-qr-code me-2"></i><span class="small">Pembayaran: QRIS Realtime semua bank</span></div>
+        </div>
+      </div>
+      <hr style="border-color:rgba(255,255,255,.15)">
+      <div class="text-center foot-bottom"><div class="small" style="color:#b8cbe2">Titip Belanja • Antar Jemput • Bersih Kos • Bersih WC • Kurir</div><div class="small mt-1" style="color:#8fa9c8">© 2026 PanggilKami Solo. Seluruh hak dilindungi.</div></div>
+    </div>
+  </footer>
+</div>
+
+<!-- ======================= ORDERS ======================= -->
+<div class="view" id="v-orders"><div class="container page-pad">
+  <h2 class="section-title">Pesanan Saya</h2><p class="text-muted-pk mb-4">Pantau status dan riwayat pesanan Anda.</p>
+  <div id="ordersList" class="d-flex flex-column gap-3"></div>
+</div></div>
+
+<!-- ======================= PROFILE ======================= -->
+<div class="view" id="v-profile"><div class="container page-pad">
+  <div class="row justify-content-center"><div class="col-lg-7"><div class="pk-card p-3 p-md-4" id="profileBox"></div></div></div>
+</div></div>
+
+<!-- ======================= ADMIN ======================= -->
+<div class="view" id="v-admin"><div class="container page-pad">
+  <h2 class="section-title">Dasbor Admin</h2>
+  <p class="text-muted-pk mb-3">Kelola pesanan, verifikasi pembayaran, testimoni, dan pengguna.</p>
+  <div id="adminBox"></div>
+</div></div>
+</main>
+
+<a class="wa-float WA_LINK" href="#" target="_blank" rel="noopener" aria-label="Hubungi admin via WhatsApp"><i class="bi bi-whatsapp"></i></a>
+
+<div class="modal fade" id="mdl" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title" id="mdlTitle"></h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body" id="mdlBody"></div>
+  <div class="modal-footer" id="mdlFoot"></div>
+</div></div></div>
+
+<div class="modal fade" id="imgMdl" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content bg-transparent border-0"><img id="imgBig" class="img-fluid rounded-4" alt=""></div></div></div>
+<div class="toast-wrap" id="toasts"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="qrcode.js"></script>
+<script src="images.js"></script>
+
+<script src="app.js"></script>
+<script src="cloud.js"></script>
+</body>
+</html>
