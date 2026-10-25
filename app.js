@@ -3,21 +3,21 @@
 const WA = '6282283883580', WA_DISP = '0822-8388-3580', NMID = 'ID1026484632207';
 const VOUCHERS = { KOSBARU:{ off:5000, firstOnly:true, label:'potongan Rp 5.000' }, PANGGILKAMI:{ pct:100, label:'biaya jasa gratis 100%' }, PESANAJA:{ pct:50, label:'diskon 50% biaya jasa' } };
 const SERVICES = [
-  { id:'belanja', name:'Titip Belanja', icon:'bi-bag-check', price:15000, label:'Mulai Rp 15.000', flow:'beli',
+  { id:'belanja', name:'Titip Belanja', icon:'bi-bag-check', price:9900, label:'Mulai Rp 9.900', flow:'beli',
     short:'Makanan, minimarket, pasar, apotek.',
-    desc:'Titip makanan, kebutuhan minimarket, pasar, atau apotek. Biaya jasa Rp 15.000 belum termasuk harga barang. Setelah jasa dibayar di website, driver menghubungi Anda via WhatsApp untuk memastikan barang dan total belanja. Harga barang dibayar saat barang tiba sesuai struk asli (COD).' },
-  { id:'antar', name:'Antar Jemput', icon:'bi-bicycle', price:15000, label:'0–5 KM Rp 15.000', flow:'ride',
+    desc:'Titip makanan, kebutuhan minimarket, pasar, atau apotek. Biaya jasa Rp 9.900 belum termasuk harga barang. Setelah jasa dibayar di website, driver menghubungi Anda via WhatsApp untuk memastikan barang dan total belanja. Harga barang dibayar saat barang tiba sesuai struk asli (COD).' },
+  { id:'antar', name:'Antar Jemput', icon:'bi-bicycle', price:9900, label:'0–5 KM Rp 9.900', flow:'ride',
     short:'Ke stasiun, kampus, kantor.',
-    desc:'Antar jemput ke stasiun, kampus, atau kantor. Tarif Rp 15.000 untuk jarak 0–5 KM. Untuk jarak lebih jauh, tarif dikonfirmasi oleh admin melalui WhatsApp.' },
+    desc:'Antar jemput ke stasiun, kampus, atau kantor. Tarif Rp 9.900 untuk jarak 0–5 KM. Untuk jarak lebih jauh, tarif dikonfirmasi oleh admin melalui WhatsApp.' },
   { id:'kos', name:'Bersih Kos', icon:'bi-house-heart', price:120000, label:'Rp 120.000 / jam', flow:'bersih',
     short:'Sapu, pel, ganti sprei.',
     desc:'Pembersihan kamar kos meliputi menyapu, mengepel, dan mengganti sprei. Tarif Rp 120.000 per jam. Pilih durasi pada form pemesanan.' },
   { id:'wc', name:'Bersih WC', icon:'bi-droplet-half', price:100000, label:'Mulai Rp 100.000', flow:'bersih', photoReq:true,
     short:'Sikat kerak, kloset, wastafel.',
     desc:'Menyikat kerak, membersihkan kloset dan wastafel. Mulai Rp 100.000, menyesuaikan ukuran kamar mandi. Dilengkapi foto before–after sebagai bukti kebersihan.' },
-  { id:'kurir', name:'Kurir Serabutan', icon:'bi-box-seam', price:15000, label:'Mulai Rp 15.000', flow:'beli',
+  { id:'kurir', name:'Kurir Serabutan', icon:'bi-box-seam', price:9900, label:'Mulai Rp 9.900', flow:'beli',
     short:'Kirim dokumen, print skripsi, antre.',
-    desc:'Kirim dokumen, cetak skripsi, mengantre, dan keperluan serabutan lainnya. Mulai Rp 15.000; tarif akhir dikonfirmasi sesuai tugas.' }
+    desc:'Kirim dokumen, cetak skripsi, mengantre, dan keperluan serabutan lainnya. Mulai Rp 9.900; tarif akhir dikonfirmasi sesuai tugas.' }
 ];
 const FLOWS = {
   beli:   ['Pesanan Diterima','Driver OTW ke Toko','Barang Dibeli (Foto Struk)','OTW Antar ke Kamu','Selesai'],
@@ -230,7 +230,7 @@ const PROMISES = [
   ['bi-chat-dots','Konfirmasi Sebelum Dikerjakan','Detail pesanan dipastikan melalui WhatsApp agar tidak ada yang keliru.'],
   ['bi-camera-video','Chat/VC dengan Penjual','Khusus titip belanja, Anda dapat berbicara langsung dengan penjual.'],
   ['bi-receipt','Harga Sesuai Struk Asli','Harga barang mengikuti struk toko dan dibayar saat barang tiba.'],
-  ['bi-tag','Biaya Jasa Transparan','Tarif jasa tertera jelas sebelum Anda membayar, mulai Rp 15.000.'],
+  ['bi-tag','Biaya Jasa Transparan','Tarif jasa tertera jelas sebelum Anda membayar, mulai Rp 9.900.'],
   ['bi-qr-code-scan','Pembayaran QRIS Aman','Biaya jasa dibayar melalui QRIS semua bank dengan nominal terkunci.'],
   ['bi-geo-alt','Pelacakan Status Pesanan','Pantau setiap tahap pesanan langsung dari akun Anda.'],
   ['bi-camera','Bukti Foto Pengerjaan','Foto struk belanja dan foto before–after untuk layanan kebersihan.'],
