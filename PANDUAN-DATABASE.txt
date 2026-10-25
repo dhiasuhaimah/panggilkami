@@ -1,0 +1,80 @@
+============================================================
+PANDUAN DATABASE ONLINE SUPABASE PANGGILKAMI
+============================================================
+
+Kenapa Diperlukan?
+Website PanggilKami berjalan di browser frontend.
+Tanpa tabel di Supabase:
+1. Akun yang didaftarkan pelanggan hanya tersimpan di browser HP pelanggan tersebut.
+2. Pesanan dan bukti pembayaran hanya tersimpan di memori HP pelanggan.
+3. Akibatnya, Dasbor Admin di laptop/HP Admin menampilkan "0 Pesanan" dan pengguna baru belum muncul.
+
+Dengan mengaktifkan tabel Supabase:
+1. Setiap pelanggan mendaftar akun di panggilkami.my.id, data akun langsung otomatis masuk ke Dasbor Admin (tab "Pengguna").
+2. Setiap ada pesanan & upload bukti bayar, data otomatis masuk ke Dasbor Admin (tab "Pesanan") seketika dengan bunyi notifikasi lonceng (chime).
+3. Ketika Admin memverifikasi pembayaran dan memperbarui status pelacakan di Dasbor Admin, status di HP pelanggan langsung berubah secara realtime otomatis!
+
+============================================================
+LANGKAH CEPAT 1-MENIT (Aktifkan Tabel Database):
+============================================================
+Project Supabase Anda sudah terhubung di website:
+- URL: https://bfjaflojwapdvclvvghy.supabase.co
+- API Key: sb_publishable_LfyHyXMs3ZJdd2jIzaEmhw__NccGunP
+
+Anda hanya perlu membuat tabelnya sekali saja:
+
+1. Buka tautan SQL Editor project Anda:
+   👉 https://supabase.com/dashboard/project/bfjaflojwapdvclvvghy/sql/new
+
+2. Salin dan tempel (paste) seluruh skrip berikut ke dalam kotak editor:
+
+------------------ SALIN SKRIP DI BAWAH INI ------------------
+
+-- 1. TABEL PESANAN (Orders & Bukti Pembayaran)
+create table if not exists orders (
+  id text primary key,
+  uid text not null default '',
+  data jsonb not null,
+  upd bigint not null
+);
+create index if not exists orders_upd_idx on orders (upd);
+create index if not exists orders_uid_idx on orders (uid);
+alter table orders enable row level security;
+drop policy if exists "pk_orders_all" on orders;
+create policy "pk_orders_all" on orders for all to public using (true) with check (true);
+
+-- 2. TABEL PENGGUNA (Users & Pelanggan Terdaftar)
+create table if not exists users (
+  id text primary key,
+  email text not null,
+  role text not null default 'user',
+  data jsonb not null,
+  upd bigint not null
+);
+create index if not exists users_upd_idx on users (upd);
+create index if not exists users_email_idx on users (email);
+alter table users enable row level security;
+drop policy if exists "pk_users_all" on users;
+create policy "pk_users_all" on users for all to public using (true) with check (true);
+
+-- 3. TABEL TESTIMONI & ULASAN (Testimonials)
+create table if not exists testimonials (
+  id text primary key,
+  data jsonb not null,
+  upd bigint not null
+);
+create index if not exists testimonials_upd_idx on testimonials (upd);
+alter table testimonials enable row level security;
+drop policy if exists "pk_testimonials_all" on testimonials;
+create policy "pk_testimonials_all" on testimonials for all to public using (true) with check (true);
+
+--------------------------------------------------------------
+
+3. Klik tombol hijau "Run" di pojok kanan bawah editor Supabase.
+   Harus muncul keterangan "Success: No rows returned".
+
+4. Selesai!
+   Buka panggilkami.my.id, masuk ke Dasbor Admin (email: admin@gmail.com, sandi: 123456).
+   Indikator di kiri bawah akan langsung berwarna HIJAU:
+   "✔ Database: Terhubung & Sinkron".
+   Semua akun yang didaftarkan dan pesanan pelanggan akan otomatis langsung masuk ke Dasbor Admin!

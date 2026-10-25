@@ -3,9 +3,9 @@
 const WA = '6282283883580', WA_DISP = '0822-8388-3580', NMID = 'ID1026484632207';
 const VOUCHERS = { KOSBARU:{ off:5000, firstOnly:true, label:'potongan Rp 5.000' }, PANGGILKAMI:{ pct:100, label:'biaya jasa gratis 100%' }, PESANAJA:{ pct:50, label:'diskon 50% biaya jasa' } };
 const SERVICES = [
-  { id:'belanja', name:'Titip Belanja', icon:'bi-bag-check', price:9900, label:'Mulai Rp 9.900', flow:'beli',
+  { id:'belanja', name:'Titip Belanja', icon:'bi-bag-check', price:15000, label:'Mulai Rp 15.000', flow:'beli',
     short:'Makanan, minimarket, pasar, apotek.',
-    desc:'Titip makanan, kebutuhan minimarket, pasar, atau apotek. Biaya jasa Rp 9.900 belum termasuk harga barang. Setelah jasa dibayar di website, driver menghubungi Anda via WhatsApp untuk memastikan barang dan total belanja. Harga barang dibayar saat barang tiba sesuai struk asli (COD).' },
+    desc:'Titip makanan, kebutuhan minimarket, pasar, atau apotek. Biaya jasa Rp 15.000 belum termasuk harga barang. Setelah jasa dibayar di website, driver menghubungi Anda via WhatsApp untuk memastikan barang dan total belanja. Harga barang dibayar saat barang tiba sesuai struk asli (COD).' },
   { id:'antar', name:'Antar Jemput', icon:'bi-bicycle', price:9900, label:'0–5 KM Rp 9.900', flow:'ride',
     short:'Ke stasiun, kampus, kantor.',
     desc:'Antar jemput ke stasiun, kampus, atau kantor. Tarif Rp 9.900 untuk jarak 0–5 KM. Untuk jarak lebih jauh, tarif dikonfirmasi oleh admin melalui WhatsApp.' },
@@ -78,12 +78,14 @@ function getSess() {
 function me() { const s = getSess(); return s ? users().find(u => u.id === s.uid) || null : null; }
 const isAdmin = () => me()?.role === 'admin';
 async function seedAdmin() {
-  /* Akun admin selalu dipastikan ada dan sesuai kredensial ini. */
-  const us = users(); const salt = Math.random().toString(36).slice(2);
-  const adm = { name:'Admin PanggilKami', email:'admin@gmail.com', salt, hash: await hashPw('123456', salt), role:'admin' };
+  const us = users();
   const i = us.findIndex(u => u.role === 'admin');
-  if (i < 0) us.push({ id:uid('U'), photo:'', wa:'', area:'', at:Date.now(), ...adm }); else us[i] = { ...us[i], ...adm };
-  db.set(K.users, us);
+  if (i < 0) {
+    const salt = Math.random().toString(36).slice(2);
+    const adm = { id:uid('U'), name:'Admin PanggilKami', email:'admin@gmail.com', salt, hash: await hashPw('123456', salt), role:'admin', photo:'', wa:'', area:'', at:Date.now() };
+    us.push(adm);
+    db.set(K.users, us);
+  }
 }
 
 /* ============ Modal helper ============ */
@@ -331,10 +333,16 @@ async function submitAuth(form) {
     if (us.some(u => u.email === email)) { err.textContent = 'Email sudah terdaftar. Silakan masuk.'; return; }
     const salt = Math.random().toString(36).slice(2);
     const u = { id:uid('U'), name, email, salt, hash: await hashPw(pw, salt), role:'user', photo:'', wa:'', area:'', at:Date.now() };
-    us.push(u); if (!db.set(K.users, us)) return;
+    us.push(u);
+    if (!db.set(K.users, us)) return;
+    if (window.pkCloudPush) window.pkCloudPush('pk_users');
     startSession(u.id, true); closeModal(); toast('Akun berhasil dibuat. Selamat datang!'); afterAuth();
   } else {
-    const u = us.find(x => x.email === email);
+    let u = us.find(x => x.email === email);
+    if (!u && window.pkCloudPullUser) {
+      err.textContent = 'Memeriksa akun…';
+      u = await window.pkCloudPullUser(email);
+    }
     if (!u || u.hash !== await hashPw(pw, u.salt)) { err.textContent = 'Email atau kata sandi salah.'; return; }
     startSession(u.id, $('#remember')?.checked); closeModal(); toast('Berhasil masuk.'); afterAuth();
   }
@@ -360,7 +368,9 @@ function submitOrder() {
     pick:(cfg.pick && (pk.text || pk.lat != null)) ? pk : null, dest:locVal('d'), when:$('#oWhen').value, payGoods: svc === 'belanja' ? ($('input[name=oPayG]:checked')?.value || 'Tunai') : '',
     fee:c.fee, off:c.off, total:c.total, voucher: c.off ? ($('#oVoucher').dataset.applied || '') : '', pay:'unpaid', proof:'', step:-1, log:[], reviewed:false, at:Date.now() };
   if (o.total === 0) { o.pay = 'verified'; o.step = 0; o.log.push({ t:Date.now(), s:'Biaya jasa gratis dengan voucher ' + o.voucher, i:0 }); }
-  const all = orders(); all.push(o); if (!db.set(K.orders, all)) return;
+  const all = orders(); all.push(o);
+  if (!db.set(K.orders, all)) return;
+  if (window.pkCloudPush) window.pkCloudPush('pk_orders');
   $('#oDetail').value = ''; ['p','d'].forEach(t => { $('#' + t + 'Text').value = ''; LOC[t] = { lat:null, lng:null }; $('#' + t + 'Prev').classList.add('d-none'); $('#' + t + 'Prev').innerHTML = ''; }); setDefaultWhen(); $('#oVoucher').value = ''; $('#oVoucher').dataset.applied = ''; $('#voucherMsg').textContent = '';
   updateOrderForm(); clearDraft(); ['p','d'].forEach(t => { $('#' + t + 'Sug').classList.add('d-none'); });
   if (o.total === 0) { toast('Pesanan diterima! Biaya jasa gratis dengan voucher.'); go('orders'); setTimeout(() => orderDetail(o.id), 400); } else payModal(o.id);
@@ -424,7 +434,9 @@ async function sendProof(id) {
   try {
     const img = await readImg(f, 900, .7), all = orders(), o = all.find(x => x.id === id);
     o.proof = img; o.pay = 'proof'; o.log.push({ t:Date.now(), s:'Bukti pembayaran dikirim' });
-    if (!db.set(K.orders, all)) return; closeModal(); toast('Bukti pembayaran terkirim. Menunggu verifikasi admin.'); go('orders');
+    if (!db.set(K.orders, all)) return;
+    if (window.pkCloudPush) window.pkCloudPush('pk_orders');
+    closeModal(); toast('Bukti pembayaran terkirim. Menunggu verifikasi admin.'); go('orders');
   } catch { $('#proofErr').textContent = 'Gambar tidak dapat dibaca. Coba foto lain.'; }
 }
 function payBadge(o) {
@@ -527,6 +539,40 @@ async function saveProfile() {
   if (db.set(K.users, us)) { toast('Profil berhasil diperbarui.'); renderView(); }
 }
 
+let lastOrdersLength = orders().length;
+function playChime() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.12);
+    g.gain.setValueAtTime(0.15, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.45);
+  } catch {}
+}
+
+window.onCloudUpdated = function (diff) {
+  const os = orders();
+  if (diff && diff.orders) {
+    if (isAdmin()) {
+      if (os.length > lastOrdersLength) {
+        playChime();
+        toast('Pesanan baru masuk dari pelanggan!');
+      }
+      if (view === 'admin') renderAdmin();
+    } else {
+      if (view === 'orders') renderOrders();
+    }
+  }
+  if (diff && diff.users && isAdmin() && view === 'admin' && adminTab === 'users') {
+    renderAdmin();
+  }
+  lastOrdersLength = os.length;
+};
+
 /* ============ ADMIN ============ */
 let adminTab = 'orders';
 function renderAdmin() {
@@ -553,10 +599,39 @@ function renderAdmin() {
     : '<div class="pk-card p-4 text-center text-muted-pk">Belum ada testimoni.</div>';
   if (adminTab === 'tests') body = '<button class="btn btn-pk btn-sm mb-3" data-act="tAdd"><i class="bi bi-plus-lg me-1"></i>Tambah Ulasan Asli</button>' + body;
   if (adminTab === 'users') body = `<div class="pk-card p-2"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Nama</th><th>Email</th><th>Peran</th><th></th></tr></thead><tbody>${us.map(u => `<tr><td>${esc(u.name)}</td><td class="small">${esc(u.email)}</td><td>${u.role}</td><td>${u.role!=='admin' ? `<button class="btn btn-sm btn-outline-danger" data-act="delUser" data-id="${u.id}"><i class="bi bi-trash"></i></button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>`;
-  if (adminTab === 'set') body = `<div class="pk-card p-3"><h5>Kode QRIS Statis</h5><p class="small text-muted-pk">Kode ini diubah otomatis menjadi QRIS dinamis (nominal terisi) untuk setiap pesanan. Tempel hasil pindai QRIS resmi Anda jika berganti merchant.</p>
-    <textarea id="qrisText" class="form-control mb-2" rows="5" style="font-family:monospace;font-size:.78rem">${esc(qrisStatic())}</textarea>
-    <div class="small mb-3 ${crcOk(qrisStatic()) ? 'text-success' : 'text-danger'}">${crcOk(qrisStatic()) ? '✔ Kode valid (CRC cocok)' : '✖ CRC tidak cocok'}</div>
-    <div class="d-flex gap-2 flex-wrap"><button class="btn btn-pk" data-act="saveQris">Simpan</button><button class="btn btn-outline-pk" data-act="resetQris">Kembalikan bawaan</button></div></div>`;
+  if (adminTab === 'set') body = `
+    <div class="pk-card p-3 mb-3">
+      <h5><i class="bi bi-database me-2" style="color:var(--blue)"></i>Database Online (Supabase)</h5>
+      <p class="small text-muted-pk mb-2">Menghubungkan website di HP pelanggan dengan Dasbor Admin secara realtime sehingga pesanan, bukti bayar, dan akun pelanggan langsung otomatis masuk ke sini.</p>
+      
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <span class="badge ${window.pkCloudStatus?.ok ? 'bg-success' : 'bg-danger'} p-2">
+          ${window.pkCloudStatus?.ok ? '<i class="bi bi-check-circle-fill me-1"></i> Terhubung &amp; Aktif' : '<i class="bi bi-exclamation-triangle-fill me-1"></i> ' + (window.pkCloudStatus?.msg || 'Belum Terhubung')}
+        </span>
+      </div>
+
+      <div class="d-flex gap-2 flex-wrap mb-3">
+        <button class="btn btn-pk btn-sm" data-act="copySql"><i class="bi bi-clipboard-check me-1"></i>Salin Skrip SQL Database</button>
+        <a class="btn btn-outline-pk btn-sm" href="https://supabase.com/dashboard/project/bfjaflojwapdvclvvghy/sql/new" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right me-1"></i>Buka SQL Editor Supabase</a>
+        <button class="btn btn-outline-pk btn-sm" data-act="testCloud"><i class="bi bi-arrow-repeat me-1"></i>Tes Koneksi Sekarang</button>
+        <button class="btn btn-outline-pk btn-sm" data-act="syncCloudNow"><i class="bi bi-cloud-arrow-down me-1"></i>Sinkronkan Data Sekarang</button>
+      </div>
+      
+      <div class="small p-2 rounded" style="background:rgba(21,115,71,0.08);border:1px dashed var(--blue)">
+        <strong>Petunjuk 1-Menit:</strong> Klik <em>"Salin Skrip SQL Database"</em>, lalu klik <em>"Buka SQL Editor Supabase"</em>, tempel (paste) di query editor dan klik <strong>Run</strong>. Seketika semua tabel dibuat dan data pesanan langsung mengalir otomatis!
+      </div>
+    </div>
+
+    <div class="pk-card p-3">
+      <h5><i class="bi bi-qr-code me-2" style="color:var(--blue)"></i>Kode QRIS Statis</h5>
+      <p class="small text-muted-pk">Kode ini diubah otomatis menjadi QRIS dinamis (nominal terisi) untuk setiap pesanan. Tempel hasil pindai QRIS resmi Anda jika berganti merchant.</p>
+      <textarea id="qrisText" class="form-control mb-2" rows="4" style="font-family:monospace;font-size:.78rem">${esc(qrisStatic())}</textarea>
+      <div class="small mb-3 ${crcOk(qrisStatic()) ? 'text-success' : 'text-danger'}">${crcOk(qrisStatic()) ? '✔ Kode valid (CRC cocok)' : '✖ CRC tidak cocok'}</div>
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-pk" data-act="saveQris">Simpan QRIS</button>
+        <button class="btn btn-outline-pk" data-act="resetQris">Kembalikan bawaan</button>
+      </div>
+    </div>`;
   $('#adminBox').innerHTML = `<div class="row g-2 mb-3">${stat('Total Pesanan',os.length,'bi-bag')}${stat('Perlu Verifikasi',pend,'bi-hourglass-split')}${stat('Pendapatan Jasa',rp(revenue),'bi-cash-coin')}${stat('Testimoni',ts.length,'bi-chat-heart')}</div>
     <ul class="nav nav-pills admin-tabs mb-3 flex-nowrap overflow-auto">${[['orders','Pesanan'],['tests','Testimoni'],['users','Pengguna'],['set','Pengaturan']].map(t => `<li class="nav-item"><a href="#" class="nav-link ${adminTab===t[0]?'active':''}" data-act="aTab" data-t="${t[0]}">${t[1]}</a></li>`).join('')}</ul>${body}`;
 }
@@ -613,10 +688,41 @@ const acts = {
   sendReview: d => sendReview(d.id),
   skipReview: d => { let s = []; try { s = JSON.parse(sessionStorage.getItem('pk_skip') || '[]'); } catch {} s.push(d.id); sessionStorage.setItem('pk_skip', JSON.stringify(s)); closeModal(); },
   aTab: d => { adminTab = d.t; renderAdmin(); },
-  verify: d => { const a = orders(), o = a.find(x => x.id === d.id); o.pay = 'verified'; o.step = 0; o.log.push({ t:Date.now(), s:'Pembayaran terverifikasi', i:0 }); db.set(K.orders, a); toast('Pembayaran diverifikasi.'); renderAdmin(); },
-  reject: d => { if (!confirm('Tolak bukti pembayaran ini?')) return; const a = orders(), o = a.find(x => x.id === d.id); o.pay = 'rejected'; db.set(K.orders, a); renderAdmin(); },
+  verify: d => { const a = orders(), o = a.find(x => x.id === d.id); o.pay = 'verified'; o.step = 0; o.log.push({ t:Date.now(), s:'Pembayaran terverifikasi', i:0 }); db.set(K.orders, a); if (window.pkCloudPush) window.pkCloudPush('pk_orders'); toast('Pembayaran diverifikasi.'); renderAdmin(); },
+  reject: d => { if (!confirm('Tolak bukti pembayaran ini?')) return; const a = orders(), o = a.find(x => x.id === d.id); o.pay = 'rejected'; db.set(K.orders, a); if (window.pkCloudPush) window.pkCloudPush('pk_orders'); renderAdmin(); },
   stepModal: d => stepModal(d.id), saveStep: d => saveStep(d.id),
-  delOrder: d => { if (confirm('Hapus pesanan ini secara permanen?')) { db.set(K.orders, orders().filter(x => x.id !== d.id)); renderAdmin(); } },
+  delOrder: d => { if (confirm('Hapus pesanan ini secara permanen?')) { db.set(K.orders, orders().filter(x => x.id !== d.id)); if (window.pkCloudPush) window.pkCloudPush('pk_orders'); renderAdmin(); } },
+  copySql: () => {
+    if (window.PK_SQL_SCRIPT) {
+      navigator.clipboard.writeText(window.PK_SQL_SCRIPT).then(() => {
+        toast('Skrip SQL berhasil disalin! Silakan tempel di SQL Editor Supabase.');
+      }).catch(() => {
+        prompt('Salin skrip SQL di bawah ini:', window.PK_SQL_SCRIPT);
+      });
+    }
+  },
+  testCloud: async () => {
+    toast('Memeriksa koneksi ke Supabase…');
+    try {
+      if (window.pkCloudTest) {
+        await window.pkCloudTest();
+        toast('Sukses! Semua tabel (orders, users, testimonials) terhubung.');
+        if (window.pkCloudStatus) { window.pkCloudStatus.ok = true; window.pkCloudStatus.msg = 'Terhubung & Aktif'; }
+        renderAdmin();
+      }
+    } catch (e) {
+      alert('Pemeriksaan Database:\n\n' + e.message);
+      renderAdmin();
+    }
+  },
+  syncCloudNow: async () => {
+    toast('Menyinkronkan data dengan database…');
+    if (window.pkCloudSyncNow) {
+      await window.pkCloudSyncNow();
+      toast('Sinkronisasi selesai.');
+      renderAdmin();
+    }
+  },
   tAdd: () => openModal('Tambah Ulasan Asli', `<div class="notice small mb-3">Gunakan fitur ini hanya untuk ulasan <strong>asli</strong> dari pelanggan yang benar-benar memakai layanan (misalnya diterima via WhatsApp), dengan seizin yang bersangkutan.</div>
     <div class="mb-3"><label class="form-label">Nama (mis. Budi)</label><input class="form-control" id="taName" maxlength="30"></div>
     <div class="mb-3"><label class="form-label">Daerah (mis. Jebres)</label><input class="form-control" id="taArea" maxlength="30"></div>
