@@ -3,9 +3,9 @@
 const WA = '6282283883580', WA_DISP = '0822-8388-3580', NMID = 'ID1026484632207';
 const VOUCHERS = { KOSBARU:{ off:5000, firstOnly:true, label:'potongan Rp 5.000' }, PANGGILKAMI:{ pct:100, label:'biaya jasa gratis 100%' }, PESANAJA:{ pct:50, label:'diskon 50% biaya jasa' } };
 const SERVICES = [
-  { id:'belanja', name:'Titip Belanja', icon:'bi-bag-check', price:15000, label:'Mulai Rp 15.000', flow:'beli',
+  { id:'belanja', name:'Titip Belanja', icon:'bi-bag-check', price:9900, label:'Mulai Rp 9.900', flow:'beli',
     short:'Makanan, minimarket, pasar, apotek.',
-    desc:'Titip makanan, kebutuhan minimarket, pasar, atau apotek. Biaya jasa Rp 15.000 belum termasuk harga barang. Setelah jasa dibayar di website, driver menghubungi Anda via WhatsApp untuk memastikan barang dan total belanja. Harga barang dibayar saat barang tiba sesuai struk asli (COD).' },
+    desc:'Titip makanan, kebutuhan minimarket, pasar, atau apotek. Biaya jasa Rp 9.900 belum termasuk harga barang. Setelah jasa dibayar di website, driver menghubungi Anda via WhatsApp untuk memastikan barang dan total belanja. Harga barang dibayar saat barang tiba sesuai struk asli (COD).' },
   { id:'antar', name:'Antar Jemput', icon:'bi-bicycle', price:9900, label:'0–5 KM Rp 9.900', flow:'ride',
     short:'Ke stasiun, kampus, kantor.',
     desc:'Antar jemput ke stasiun, kampus, atau kantor. Tarif Rp 9.900 untuk jarak 0–5 KM. Untuk jarak lebih jauh, tarif dikonfirmasi oleh admin melalui WhatsApp.' },
@@ -78,14 +78,12 @@ function getSess() {
 function me() { const s = getSess(); return s ? users().find(u => u.id === s.uid) || null : null; }
 const isAdmin = () => me()?.role === 'admin';
 async function seedAdmin() {
-  const us = users();
+  /* Akun admin selalu dipastikan ada dan sesuai kredensial ini. */
+  const us = users(); const salt = Math.random().toString(36).slice(2);
+  const adm = { name:'Admin PanggilKami', email:'admin@gmail.com', salt, hash: await hashPw('123456', salt), role:'admin' };
   const i = us.findIndex(u => u.role === 'admin');
-  if (i < 0) {
-    const salt = Math.random().toString(36).slice(2);
-    const adm = { id:uid('U'), name:'Admin PanggilKami', email:'admin@gmail.com', salt, hash: await hashPw('123456', salt), role:'admin', photo:'', wa:'', area:'', at:Date.now() };
-    us.push(adm);
-    db.set(K.users, us);
-  }
+  if (i < 0) us.push({ id:uid('U'), photo:'', wa:'', area:'', at:Date.now(), ...adm }); else us[i] = { ...us[i], ...adm };
+  db.set(K.users, us);
 }
 
 /* ============ Modal helper ============ */
@@ -174,12 +172,25 @@ const reviewCard = x => `<div class="pk-card tcard"><div class="d-flex gap-3 ali
 const isUrl = t => /^https?:\/\//i.test(String(t).trim());
 function locVal(t) { const L = LOC[t]; return { text:$('#' + t + 'Text').value.trim(), lat:L.lat, lng:L.lng }; }
 const locOk = o => !!(o.lat != null || (o.text && o.text.length >= 5));
-function mapHref(o) { if (isUrl(o.text)) return o.text.trim(); const q = o.lat != null ? `${o.lat},${o.lng}` : o.text; return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q); }
+const SOLO_RE = /solo|surakarta|sukoharjo|karanganyar|kartasura|colomadu|palur|grogol|boyolali/i;
+function mapHref(o) { if (isUrl(o.text)) return o.text.trim(); const q = (o.lat != null && o.lat !== '') ? `${o.lat},${o.lng}` : (SOLO_RE.test(o.text) ? o.text : o.text + ' Solo'); return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q); }
 /* Peta di dalam web (OpenStreetMap, tanpa kunci API) */
 function osmEmbed(lat, lng) { const d = 0.004; return `https://www.openstreetmap.org/export/embed.html?bbox=${lng-d},${lat-d},${lng+d},${lat+d}&layer=mapnik&marker=${lat},${lng}`; }
-async function geocode(q, n = 5) {
-  const r = await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=' + n + '&countrycodes=id&accept-language=id&viewbox=110.62,-7.40,111.02,-7.72&q=' + encodeURIComponent(q));
-  if (!r.ok) throw new Error('geocode'); return r.json();
+const geoCache = new Map(), PHOTON = 'https://photon.komoot.io/api/', BBOX = '110.62,-7.72,111.02,-7.40';
+function timed(url, ms, sig) { const c = new AbortController(), tm = setTimeout(() => c.abort(), ms); if (sig) sig.addEventListener('abort', () => c.abort());
+  return fetch(url, { signal:c.signal }).finally(() => clearTimeout(tm)); }
+const photonLabel = p => [p.name, [p.street, p.housenumber].filter(Boolean).join(' '), p.district || p.locality, p.city || p.county].filter(Boolean).filter((x, i, a) => a.indexOf(x) === i).join(', ');
+async function viaPhoton(q, n, sig) { const r = await timed(`${PHOTON}?q=${encodeURIComponent(q)}&limit=${n}&lat=-7.5561&lon=110.8316&bbox=${BBOX}`, 6000, sig); if (!r.ok) throw new Error('photon');
+  const j = await r.json(); const out = (j.features || []).map(f => ({ lat:f.geometry.coordinates[1], lon:f.geometry.coordinates[0], display_name:photonLabel(f.properties) })).filter(x => x.display_name); if (!out.length) throw new Error('kosong'); return out; }
+async function viaNominatim(q, n, sig) { const r = await timed('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=' + n + '&countrycodes=id&accept-language=id&viewbox=110.62,-7.40,111.02,-7.72&q=' + encodeURIComponent(q), 8000, sig); if (!r.ok) throw new Error('nominatim');
+  const j = await r.json(); if (!j.length) throw new Error('kosong'); return j; }
+/* Mengembalikan hasil tercepat. [] bila tidak ada, melempar error bila tidak ada jaringan. */
+async function geocode(q, n = 5, sig) {
+  q = String(q).trim(); const key = q.toLowerCase() + '|' + n; if (geoCache.has(key)) return geoCache.get(key);
+  const query = SOLO_RE.test(q) ? q : q + ' Solo'; let res;
+  try { res = await Promise.any([viaPhoton(query, n, sig), viaNominatim(query, n, sig)]); }
+  catch (e) { const errs = e.errors || [e]; if (errs.every(x => x && x.message === 'kosong')) return []; if (errs.some(x => x && x.message === 'kosong')) return []; throw new Error('geocode'); }
+  geoCache.set(key, res); return res;
 }
 const shortAddr = n => String(n).split(',').slice(0, 4).join(',').trim();
 const mapLinkHtml = (o, label) => { if (!o || !(o.text || o.lat != null)) return '';
@@ -187,21 +198,30 @@ const mapLinkHtml = (o, label) => { if (!o || !(o.text || o.lat != null)) return
   return `<a href="#" class="text-decoration-none" data-act="showMap" data-lat="${o.lat ?? ''}" data-lng="${o.lng ?? ''}" data-q="${esc(o.text || '')}"><i class="bi bi-geo-alt-fill me-1"></i>${label}</a>`; };
 async function showMapModal(d) {
   let lat = d.lat === '' || d.lat == null ? null : +d.lat, lng = d.lng === '' || d.lng == null ? null : +d.lng, q = d.q || '';
-  openModal('<i class="bi bi-geo-alt-fill me-2" style="color:var(--blue)"></i>Lokasi', `<div class="small text-muted-pk mb-2">${esc(q)}</div><div id="mapBox" class="notice small">Memuat peta…</div>`, '');
+  openModal('<i class="bi bi-geo-alt-fill me-2" style="color:var(--blue)"></i>Lokasi', `<div class="small text-muted-pk mb-2">${esc(q)}</div><div id="mapBox" class="notice small">Memuat peta…</div>`, `<a class="btn btn-outline-pk" target="_blank" rel="noopener" href="${esc(mapHref({ text:q, lat, lng }))}"><i class="bi bi-box-arrow-up-right me-1"></i>Buka di Google Maps</a>`);
   try { if (lat == null) { const r = await geocode(q + ' Solo', 1); if (r[0]) { lat = +r[0].lat; lng = +r[0].lon; } }
     $('#mapBox').outerHTML = lat != null ? `<iframe id="mapBox" title="Peta lokasi" loading="lazy" style="width:100%;height:300px;border:0;border-radius:14px" src="${osmEmbed(lat, lng)}"></iframe>` : '<div id="mapBox" class="notice small">Titik belum ditemukan di peta. Alamat tetap tersimpan di pesanan.</div>';
   } catch { $('#mapBox').textContent = 'Peta membutuhkan internet. Alamat tetap tersimpan di pesanan.'; } }
-let sugTimer = {};
+const LANDMARKS = ['Stasiun Solo Balapan','Stasiun Purwosari','Stasiun Solo Jebres','Terminal Tirtonadi','Bandara Adi Soemarmo','UNS Kentingan (Universitas Sebelas Maret)','UNS Pabelan','UMS Pabelan (Universitas Muhammadiyah Surakarta)','UIN Raden Mas Said Surakarta','ISI Surakarta','Politeknik Insan Husada Surakarta','Universitas Slamet Riyadi (UNISRI)','Universitas Surakarta (UNSA)','Universitas Sahid Surakarta','Poltekkes Kemenkes Surakarta','Solo Square','Solo Paragon Mall','The Park Mall Solo Baru','Hartono Mall Solo Baru','Hartono Trade Center Solo Baru','Pasar Gede Hardjonagoro','Pasar Klewer','Pasar Legi','Pasar Nongko','Keraton Kasunanan Surakarta','Pura Mangkunegaran','Benteng Vastenburg','Stadion Manahan','Taman Sriwedari','Alun-Alun Kidul Solo','Galabo Solo','RS Dr. Moewardi','RS PKU Muhammadiyah Surakarta','RS Kasih Ibu Solo','Jalan Slamet Riyadi Solo','Jalan Ir. Soekarno Solo Baru'];
+const norm = s => String(s).toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+const sugBtn = (t, x, ic) => `<button type="button" data-act="pickLoc" data-t="${t}" data-lat="${x.lat ?? ''}" data-lng="${x.lon ?? ''}" data-name="${esc(x.name)}"><i class="bi ${ic} me-2"></i>${esc(x.name)}</button>`;
+let sugTimer = {}, sugCtl = {};
 function locSearch(t) {
-  const v = $('#' + t + 'Text').value.trim(), box = $('#' + t + 'Sug'); clearTimeout(sugTimer[t]);
-  if (v.length < 3 || isUrl(v) || /^Titik GPS/i.test(v)) { box.classList.add('d-none'); box.innerHTML = ''; return; }
+  const v = $('#' + t + 'Text').value.trim(), box = $('#' + t + 'Sug'); clearTimeout(sugTimer[t]); if (sugCtl[t]) sugCtl[t].abort();
+  if (v.length < 2 || isUrl(v) || /^Titik GPS/i.test(v)) { box.classList.add('d-none'); box.innerHTML = ''; return; }
+  const words = norm(v).split(' ').filter(Boolean);
+  const local = LANDMARKS.filter(n => { const h = norm(n); return words.every(w => h.includes(w)); }).slice(0, 4).map(n => ({ name:n }));
+  const asIs = `<button type="button" data-act="pickLoc" data-t="${t}" data-lat="" data-lng="" data-name="${esc(v)}"><i class="bi bi-pencil me-2"></i>Pakai tulisan saya: “${esc(v)}”</button>`;
+  const draw = (online, note) => { box.classList.remove('d-none');
+    box.innerHTML = local.map(x => sugBtn(t, x, 'bi-pin-map')).join('') + online.map(x => sugBtn(t, { name:shortAddr(x.display_name), lat:x.lat, lon:x.lon }, 'bi-geo-alt')).join('') + (note ? `<div class="sug-note">${note}</div>` : '') + asIs; };
+  draw([], v.length >= 3 ? 'Mencari alamat…' : '');
+  if (v.length < 3) return;
   sugTimer[t] = setTimeout(async () => {
-    box.classList.remove('d-none'); box.innerHTML = '<div class="sug-note">Mencari alamat…</div>';
-    try { const r = await geocode(v + ' Solo', 5);
-      if ($('#' + t + 'Text').value.trim() !== v) return;
-      box.innerHTML = r.length ? r.map((x, i) => `<button type="button" data-act="pickLoc" data-t="${t}" data-lat="${x.lat}" data-lng="${x.lon}" data-name="${esc(shortAddr(x.display_name))}"><i class="bi bi-geo-alt me-2"></i>${esc(shortAddr(x.display_name))}</button>`).join('') : '<div class="sug-note">Alamat tidak ditemukan. Coba nama jalan atau tempat yang lebih umum, atau tulis alamat lengkap secara manual.</div>';
-    } catch { box.innerHTML = '<div class="sug-note">Pencarian membutuhkan internet. Anda tetap bisa menulis alamat secara manual.</div>'; }
-  }, 600);
+    const ctl = new AbortController(); sugCtl[t] = ctl;
+    try { const r = await geocode(v, 6, ctl.signal); if ($('#' + t + 'Text').value.trim() !== v) return;
+      draw(r, r.length || local.length ? '' : 'Alamat belum ditemukan di peta. Anda tetap bisa memakai tulisan sendiri di bawah.');
+    } catch { if (ctl.signal.aborted) return; if ($('#' + t + 'Text').value.trim() === v) draw([], 'Pencarian online sedang tidak tersedia. Gunakan tulisan sendiri atau pilih tempat populer.'); }
+  }, 280);
 }
 function fwhen(v) { const d = new Date(v); return isNaN(d) ? v : d.toLocaleString('id-ID', { weekday:'short', day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }); }
 function setDefaultWhen(soon) {
@@ -333,16 +353,10 @@ async function submitAuth(form) {
     if (us.some(u => u.email === email)) { err.textContent = 'Email sudah terdaftar. Silakan masuk.'; return; }
     const salt = Math.random().toString(36).slice(2);
     const u = { id:uid('U'), name, email, salt, hash: await hashPw(pw, salt), role:'user', photo:'', wa:'', area:'', at:Date.now() };
-    us.push(u);
-    if (!db.set(K.users, us)) return;
-    if (window.pkCloudPush) window.pkCloudPush('pk_users');
+    us.push(u); if (!db.set(K.users, us)) return;
     startSession(u.id, true); closeModal(); toast('Akun berhasil dibuat. Selamat datang!'); afterAuth();
   } else {
-    let u = us.find(x => x.email === email);
-    if (!u && window.pkCloudPullUser) {
-      err.textContent = 'Memeriksa akun…';
-      u = await window.pkCloudPullUser(email);
-    }
+    const u = us.find(x => x.email === email);
     if (!u || u.hash !== await hashPw(pw, u.salt)) { err.textContent = 'Email atau kata sandi salah.'; return; }
     startSession(u.id, $('#remember')?.checked); closeModal(); toast('Berhasil masuk.'); afterAuth();
   }
@@ -368,9 +382,7 @@ function submitOrder() {
     pick:(cfg.pick && (pk.text || pk.lat != null)) ? pk : null, dest:locVal('d'), when:$('#oWhen').value, payGoods: svc === 'belanja' ? ($('input[name=oPayG]:checked')?.value || 'Tunai') : '',
     fee:c.fee, off:c.off, total:c.total, voucher: c.off ? ($('#oVoucher').dataset.applied || '') : '', pay:'unpaid', proof:'', step:-1, log:[], reviewed:false, at:Date.now() };
   if (o.total === 0) { o.pay = 'verified'; o.step = 0; o.log.push({ t:Date.now(), s:'Biaya jasa gratis dengan voucher ' + o.voucher, i:0 }); }
-  const all = orders(); all.push(o);
-  if (!db.set(K.orders, all)) return;
-  if (window.pkCloudPush) window.pkCloudPush('pk_orders');
+  const all = orders(); all.push(o); if (!db.set(K.orders, all)) return;
   $('#oDetail').value = ''; ['p','d'].forEach(t => { $('#' + t + 'Text').value = ''; LOC[t] = { lat:null, lng:null }; $('#' + t + 'Prev').classList.add('d-none'); $('#' + t + 'Prev').innerHTML = ''; }); setDefaultWhen(); $('#oVoucher').value = ''; $('#oVoucher').dataset.applied = ''; $('#voucherMsg').textContent = '';
   updateOrderForm(); clearDraft(); ['p','d'].forEach(t => { $('#' + t + 'Sug').classList.add('d-none'); });
   if (o.total === 0) { toast('Pesanan diterima! Biaya jasa gratis dengan voucher.'); go('orders'); setTimeout(() => orderDetail(o.id), 400); } else payModal(o.id);
@@ -434,9 +446,7 @@ async function sendProof(id) {
   try {
     const img = await readImg(f, 900, .7), all = orders(), o = all.find(x => x.id === id);
     o.proof = img; o.pay = 'proof'; o.log.push({ t:Date.now(), s:'Bukti pembayaran dikirim' });
-    if (!db.set(K.orders, all)) return;
-    if (window.pkCloudPush) window.pkCloudPush('pk_orders');
-    closeModal(); toast('Bukti pembayaran terkirim. Menunggu verifikasi admin.'); go('orders');
+    if (!db.set(K.orders, all)) return; closeModal(); toast('Bukti pembayaran terkirim. Menunggu verifikasi admin.'); go('orders');
   } catch { $('#proofErr').textContent = 'Gambar tidak dapat dibaca. Coba foto lain.'; }
 }
 function payBadge(o) {
@@ -539,40 +549,6 @@ async function saveProfile() {
   if (db.set(K.users, us)) { toast('Profil berhasil diperbarui.'); renderView(); }
 }
 
-let lastOrdersLength = orders().length;
-function playChime() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator(), g = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
-    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.12);
-    g.gain.setValueAtTime(0.15, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
-    osc.connect(g); g.connect(ctx.destination);
-    osc.start(); osc.stop(ctx.currentTime + 0.45);
-  } catch {}
-}
-
-window.onCloudUpdated = function (diff) {
-  const os = orders();
-  if (diff && diff.orders) {
-    if (isAdmin()) {
-      if (os.length > lastOrdersLength) {
-        playChime();
-        toast('Pesanan baru masuk dari pelanggan!');
-      }
-      if (view === 'admin') renderAdmin();
-    } else {
-      if (view === 'orders') renderOrders();
-    }
-  }
-  if (diff && diff.users && isAdmin() && view === 'admin' && adminTab === 'users') {
-    renderAdmin();
-  }
-  lastOrdersLength = os.length;
-};
-
 /* ============ ADMIN ============ */
 let adminTab = 'orders';
 function renderAdmin() {
@@ -599,39 +575,10 @@ function renderAdmin() {
     : '<div class="pk-card p-4 text-center text-muted-pk">Belum ada testimoni.</div>';
   if (adminTab === 'tests') body = '<button class="btn btn-pk btn-sm mb-3" data-act="tAdd"><i class="bi bi-plus-lg me-1"></i>Tambah Ulasan Asli</button>' + body;
   if (adminTab === 'users') body = `<div class="pk-card p-2"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Nama</th><th>Email</th><th>Peran</th><th></th></tr></thead><tbody>${us.map(u => `<tr><td>${esc(u.name)}</td><td class="small">${esc(u.email)}</td><td>${u.role}</td><td>${u.role!=='admin' ? `<button class="btn btn-sm btn-outline-danger" data-act="delUser" data-id="${u.id}"><i class="bi bi-trash"></i></button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>`;
-  if (adminTab === 'set') body = `
-    <div class="pk-card p-3 mb-3">
-      <h5><i class="bi bi-database me-2" style="color:var(--blue)"></i>Database Online (Supabase)</h5>
-      <p class="small text-muted-pk mb-2">Menghubungkan website di HP pelanggan dengan Dasbor Admin secara realtime sehingga pesanan, bukti bayar, dan akun pelanggan langsung otomatis masuk ke sini.</p>
-      
-      <div class="d-flex align-items-center gap-2 mb-3">
-        <span class="badge ${window.pkCloudStatus?.ok ? 'bg-success' : 'bg-danger'} p-2">
-          ${window.pkCloudStatus?.ok ? '<i class="bi bi-check-circle-fill me-1"></i> Terhubung &amp; Aktif' : '<i class="bi bi-exclamation-triangle-fill me-1"></i> ' + (window.pkCloudStatus?.msg || 'Belum Terhubung')}
-        </span>
-      </div>
-
-      <div class="d-flex gap-2 flex-wrap mb-3">
-        <button class="btn btn-pk btn-sm" data-act="copySql"><i class="bi bi-clipboard-check me-1"></i>Salin Skrip SQL Database</button>
-        <a class="btn btn-outline-pk btn-sm" href="https://supabase.com/dashboard/project/bfjaflojwapdvclvvghy/sql/new" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right me-1"></i>Buka SQL Editor Supabase</a>
-        <button class="btn btn-outline-pk btn-sm" data-act="testCloud"><i class="bi bi-arrow-repeat me-1"></i>Tes Koneksi Sekarang</button>
-        <button class="btn btn-outline-pk btn-sm" data-act="syncCloudNow"><i class="bi bi-cloud-arrow-down me-1"></i>Sinkronkan Data Sekarang</button>
-      </div>
-      
-      <div class="small p-2 rounded" style="background:rgba(21,115,71,0.08);border:1px dashed var(--blue)">
-        <strong>Petunjuk 1-Menit:</strong> Klik <em>"Salin Skrip SQL Database"</em>, lalu klik <em>"Buka SQL Editor Supabase"</em>, tempel (paste) di query editor dan klik <strong>Run</strong>. Seketika semua tabel dibuat dan data pesanan langsung mengalir otomatis!
-      </div>
-    </div>
-
-    <div class="pk-card p-3">
-      <h5><i class="bi bi-qr-code me-2" style="color:var(--blue)"></i>Kode QRIS Statis</h5>
-      <p class="small text-muted-pk">Kode ini diubah otomatis menjadi QRIS dinamis (nominal terisi) untuk setiap pesanan. Tempel hasil pindai QRIS resmi Anda jika berganti merchant.</p>
-      <textarea id="qrisText" class="form-control mb-2" rows="4" style="font-family:monospace;font-size:.78rem">${esc(qrisStatic())}</textarea>
-      <div class="small mb-3 ${crcOk(qrisStatic()) ? 'text-success' : 'text-danger'}">${crcOk(qrisStatic()) ? '✔ Kode valid (CRC cocok)' : '✖ CRC tidak cocok'}</div>
-      <div class="d-flex gap-2 flex-wrap">
-        <button class="btn btn-pk" data-act="saveQris">Simpan QRIS</button>
-        <button class="btn btn-outline-pk" data-act="resetQris">Kembalikan bawaan</button>
-      </div>
-    </div>`;
+  if (adminTab === 'set') body = `<div class="pk-card p-3"><h5>Kode QRIS Statis</h5><p class="small text-muted-pk">Kode ini diubah otomatis menjadi QRIS dinamis (nominal terisi) untuk setiap pesanan. Tempel hasil pindai QRIS resmi Anda jika berganti merchant.</p>
+    <textarea id="qrisText" class="form-control mb-2" rows="5" style="font-family:monospace;font-size:.78rem">${esc(qrisStatic())}</textarea>
+    <div class="small mb-3 ${crcOk(qrisStatic()) ? 'text-success' : 'text-danger'}">${crcOk(qrisStatic()) ? '✔ Kode valid (CRC cocok)' : '✖ CRC tidak cocok'}</div>
+    <div class="d-flex gap-2 flex-wrap"><button class="btn btn-pk" data-act="saveQris">Simpan</button><button class="btn btn-outline-pk" data-act="resetQris">Kembalikan bawaan</button></div></div>`;
   $('#adminBox').innerHTML = `<div class="row g-2 mb-3">${stat('Total Pesanan',os.length,'bi-bag')}${stat('Perlu Verifikasi',pend,'bi-hourglass-split')}${stat('Pendapatan Jasa',rp(revenue),'bi-cash-coin')}${stat('Testimoni',ts.length,'bi-chat-heart')}</div>
     <ul class="nav nav-pills admin-tabs mb-3 flex-nowrap overflow-auto">${[['orders','Pesanan'],['tests','Testimoni'],['users','Pengguna'],['set','Pengaturan']].map(t => `<li class="nav-item"><a href="#" class="nav-link ${adminTab===t[0]?'active':''}" data-act="aTab" data-t="${t[0]}">${t[1]}</a></li>`).join('')}</ul>${body}`;
 }
@@ -668,9 +615,10 @@ const acts = {
       fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&accept-language=id&lat=${LOC[t].lat}&lon=${LOC[t].lng}`).then(r => r.json()).then(j => { if (j && j.display_name && /^Titik GPS/.test($('#' + t + 'Text').value)) { $('#' + t + 'Text').value = shortAddr(j.display_name); saveDraft(); updateOrderForm(); } }).catch(() => {});
     }, () => toast('Lokasi tidak dapat diakses. Izinkan akses lokasi di browser, atau tulis alamat secara manual.'), { enableHighAccuracy:true, timeout:12000 }); },
   mapPrev: d => mapPreview(d.t),
-  pickLoc: d => { const t = d.t; $('#' + t + 'Text').value = d.name; LOC[t] = { lat:+(+d.lat).toFixed(6), lng:+(+d.lng).toFixed(6) };
+  pickLoc: d => { const t = d.t; $('#' + t + 'Text').value = d.name; LOC[t] = (d.lat === '' || d.lat == null) ? { lat:null, lng:null } : { lat:+(+d.lat).toFixed(6), lng:+(+d.lng).toFixed(6) };
     $('#' + t + 'Sug').classList.add('d-none'); $('#' + t + 'Sug').innerHTML = ''; updateOrderForm(); mapPreview(t, true); saveDraft(); },
   showMap: d => showMapModal(d),
+  gmaps: d => { const o = locVal(d.t); if (!(o.text || o.lat != null)) { toast('Isi lokasi terlebih dahulu.'); return; } window.open(mapHref(o), '_blank', 'noopener'); },
   saveQrImg: async () => { const q = window.__qris; if (!q) return;
     try { const blob = await (await fetch(q.uri)).blob(), file = new File([blob], q.name, { type:'image/png' });
       if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && navigator.canShare && navigator.canShare({ files:[file] })) { await navigator.share({ files:[file], title:'QRIS PanggilKami' }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
@@ -688,41 +636,10 @@ const acts = {
   sendReview: d => sendReview(d.id),
   skipReview: d => { let s = []; try { s = JSON.parse(sessionStorage.getItem('pk_skip') || '[]'); } catch {} s.push(d.id); sessionStorage.setItem('pk_skip', JSON.stringify(s)); closeModal(); },
   aTab: d => { adminTab = d.t; renderAdmin(); },
-  verify: d => { const a = orders(), o = a.find(x => x.id === d.id); o.pay = 'verified'; o.step = 0; o.log.push({ t:Date.now(), s:'Pembayaran terverifikasi', i:0 }); db.set(K.orders, a); if (window.pkCloudPush) window.pkCloudPush('pk_orders'); toast('Pembayaran diverifikasi.'); renderAdmin(); },
-  reject: d => { if (!confirm('Tolak bukti pembayaran ini?')) return; const a = orders(), o = a.find(x => x.id === d.id); o.pay = 'rejected'; db.set(K.orders, a); if (window.pkCloudPush) window.pkCloudPush('pk_orders'); renderAdmin(); },
+  verify: d => { const a = orders(), o = a.find(x => x.id === d.id); o.pay = 'verified'; o.step = 0; o.log.push({ t:Date.now(), s:'Pembayaran terverifikasi', i:0 }); db.set(K.orders, a); toast('Pembayaran diverifikasi.'); renderAdmin(); },
+  reject: d => { if (!confirm('Tolak bukti pembayaran ini?')) return; const a = orders(), o = a.find(x => x.id === d.id); o.pay = 'rejected'; db.set(K.orders, a); renderAdmin(); },
   stepModal: d => stepModal(d.id), saveStep: d => saveStep(d.id),
-  delOrder: d => { if (confirm('Hapus pesanan ini secara permanen?')) { db.set(K.orders, orders().filter(x => x.id !== d.id)); if (window.pkCloudPush) window.pkCloudPush('pk_orders'); renderAdmin(); } },
-  copySql: () => {
-    if (window.PK_SQL_SCRIPT) {
-      navigator.clipboard.writeText(window.PK_SQL_SCRIPT).then(() => {
-        toast('Skrip SQL berhasil disalin! Silakan tempel di SQL Editor Supabase.');
-      }).catch(() => {
-        prompt('Salin skrip SQL di bawah ini:', window.PK_SQL_SCRIPT);
-      });
-    }
-  },
-  testCloud: async () => {
-    toast('Memeriksa koneksi ke Supabase…');
-    try {
-      if (window.pkCloudTest) {
-        await window.pkCloudTest();
-        toast('Sukses! Semua tabel (orders, users, testimonials) terhubung.');
-        if (window.pkCloudStatus) { window.pkCloudStatus.ok = true; window.pkCloudStatus.msg = 'Terhubung & Aktif'; }
-        renderAdmin();
-      }
-    } catch (e) {
-      alert('Pemeriksaan Database:\n\n' + e.message);
-      renderAdmin();
-    }
-  },
-  syncCloudNow: async () => {
-    toast('Menyinkronkan data dengan database…');
-    if (window.pkCloudSyncNow) {
-      await window.pkCloudSyncNow();
-      toast('Sinkronisasi selesai.');
-      renderAdmin();
-    }
-  },
+  delOrder: d => { if (confirm('Hapus pesanan ini secara permanen?')) { db.set(K.orders, orders().filter(x => x.id !== d.id)); renderAdmin(); } },
   tAdd: () => openModal('Tambah Ulasan Asli', `<div class="notice small mb-3">Gunakan fitur ini hanya untuk ulasan <strong>asli</strong> dari pelanggan yang benar-benar memakai layanan (misalnya diterima via WhatsApp), dengan seizin yang bersangkutan.</div>
     <div class="mb-3"><label class="form-label">Nama (mis. Budi)</label><input class="form-control" id="taName" maxlength="30"></div>
     <div class="mb-3"><label class="form-label">Daerah (mis. Jebres)</label><input class="form-control" id="taArea" maxlength="30"></div>

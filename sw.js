@@ -1,4 +1,4 @@
-const VERSION = 'panggilkami-v17';
+const VERSION = 'panggilkami-v20';
 const CORE = [
   './',
   './index.html',
@@ -35,7 +35,7 @@ self.addEventListener('fetch', event => {
   const url = new URL(req.url);
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
   // Jangan cache tautan WhatsApp
-  if (url.hostname === 'wa.me' || url.hostname.endsWith('openstreetmap.org') || url.hostname.endsWith('supabase.co')) return;
+  if (url.hostname === 'wa.me' || url.hostname.endsWith('openstreetmap.org') || url.hostname.endsWith('komoot.io') || url.hostname.endsWith('supabase.co')) return;
 
   // Navigasi: coba jaringan dulu, jika offline pakai cache
   if (req.mode === 'navigate') {
