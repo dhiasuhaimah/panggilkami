@@ -566,6 +566,7 @@ function renderAdmin() {
         ${o.proof ? `<button class="btn btn-sm btn-outline-pk" data-act="zoomProof" data-id="${o.id}"><i class="bi bi-image"></i> Bukti</button>` : ''}
         ${o.pay==='proof' ? `<button class="btn btn-sm btn-success" data-act="verify" data-id="${o.id}">Verifikasi</button><button class="btn btn-sm btn-danger" data-act="reject" data-id="${o.id}">Tolak</button>` : ''}
         ${o.pay==='verified' ? `<button class="btn btn-sm btn-pk" data-act="stepModal" data-id="${o.id}">Update Status</button><a class="btn btn-sm btn-outline-pk" target="_blank" rel="noopener" href="${waLink(`Halo ${o.name}, status pesanan #${o.id} (${svcById(o.svc).name}): ${flowOf(o)[o.step]}. Terima kasih telah memakai PanggilKami.`, normWa(o.wa))}"><i class="bi bi-whatsapp"></i> Notif</a>` : ''}
+        <button class="btn btn-sm btn-outline-pk" data-act="oEdit" data-id="${o.id}"><i class="bi bi-pencil"></i> Edit</button>
         <button class="btn btn-sm btn-outline-danger" data-act="delOrder" data-id="${o.id}"><i class="bi bi-trash"></i></button></div></div>`; }).join('')
     : '<div class="pk-card p-4 text-center text-muted-pk">Belum ada pesanan.</div>';
   if (adminTab === 'tests') body = ts.length ? ts.map(t => `
@@ -640,6 +641,29 @@ const acts = {
   verify: d => { const a = orders(), o = a.find(x => x.id === d.id); o.pay = 'verified'; o.step = 0; o.log.push({ t:Date.now(), s:'Pembayaran terverifikasi', i:0 }); db.set(K.orders, a); toast('Pembayaran diverifikasi.'); renderAdmin(); },
   reject: d => { if (!confirm('Tolak bukti pembayaran ini?')) return; const a = orders(), o = a.find(x => x.id === d.id); o.pay = 'rejected'; db.set(K.orders, a); renderAdmin(); },
   stepModal: d => stepModal(d.id), saveStep: d => saveStep(d.id),
+  oEdit: d => { const o = orders().find(x => x.id === d.id), p = n => String(n).padStart(2, '0'),
+      dtv = ms => { const t = new Date(ms); return isNaN(t) ? '' : `${t.getFullYear()}-${p(t.getMonth()+1)}-${p(t.getDate())}T${p(t.getHours())}:${p(t.getMinutes())}`; },
+      wv = /^\d{4}-\d\d-\d\dT\d\d:\d\d/.test(o.when || '') ? o.when.slice(0, 16) : '';
+    openModal('Edit Pesanan #' + o.id, `<div class="mb-3"><label class="form-label">Nama pelanggan</label><input class="form-control" id="oeName" value="${esc(o.name||'')}" maxlength="40"></div>
+      <div class="mb-3"><label class="form-label">No. WhatsApp</label><input class="form-control" id="oeWa" value="${esc(o.wa||'')}" maxlength="20"></div>
+      <div class="mb-3"><label class="form-label">Catatan / detail</label><textarea class="form-control" id="oeDetail" rows="2">${esc(o.detail||'')}</textarea></div>
+      ${o.pick ? `<div class="mb-3"><label class="form-label">Lokasi jemput</label><input class="form-control" id="oePick" value="${esc(o.pick.text||'')}"></div>` : ''}
+      <div class="mb-3"><label class="form-label">${o.pick ? 'Tujuan' : 'Alamat / lokasi'}</label><input class="form-control" id="oeDest" value="${esc((o.dest && o.dest.text) || '')}"></div>
+      <div class="mb-3"><label class="form-label">Jadwal pengerjaan</label><input type="datetime-local" class="form-control" id="oeWhen" value="${wv}"></div>
+      <div class="mb-3"><label class="form-label">Waktu pesanan dibuat</label><input type="datetime-local" class="form-control" id="oeAt" value="${dtv(o.at)}"></div>
+      <div class="mb-3"><label class="form-label">Total biaya (Rp)</label><input type="number" min="0" class="form-control" id="oeTotal" value="${Number(o.total)||0}"></div>
+      <div class="text-danger small" id="oeErr"></div>`,
+      `<button class="btn btn-outline-pk" data-bs-dismiss="modal">Batal</button><button class="btn btn-pk" data-act="oSave" data-id="${o.id}">Simpan</button>`); },
+  oSave: d => { const a = orders(), o = a.find(x => x.id === d.id), n = $('#oeName').value.trim();
+    if (n.length < 2) { $('#oeErr').textContent = 'Nama wajib diisi.'; return; }
+    o.name = n; o.wa = $('#oeWa').value.trim(); o.detail = $('#oeDetail').value.trim();
+    const loc = (cur, v) => { v = v.trim(); if (cur && cur.text === v) return cur; return { text: v, lat: null, lng: null }; };
+    if (o.pick && $('#oePick')) o.pick = loc(o.pick, $('#oePick').value);
+    o.dest = loc(o.dest, $('#oeDest').value);
+    if ($('#oeWhen').value) o.when = $('#oeWhen').value;
+    const at = new Date($('#oeAt').value).getTime(); if (!isNaN(at)) o.at = at;
+    const tot = Number($('#oeTotal').value); if (!isNaN(tot) && tot >= 0) o.total = tot;
+    if (db.set(K.orders, a)) { closeModal(); toast('Pesanan diperbarui.'); renderAdmin(); } },
   delOrder: d => { if (confirm('Hapus pesanan ini secara permanen?')) { db.set(K.orders, orders().filter(x => x.id !== d.id)); renderAdmin(); } },
   tAdd: () => openModal('Tambah Ulasan Asli', `<div class="notice small mb-3">Gunakan fitur ini hanya untuk ulasan <strong>asli</strong> dari pelanggan yang benar-benar memakai layanan (misalnya diterima via WhatsApp), dengan seizin yang bersangkutan.</div>
     <div class="mb-3"><label class="form-label">Nama (mis. Budi)</label><input class="form-control" id="taName" maxlength="30"></div>
