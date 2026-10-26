@@ -1,4 +1,4 @@
-const VERSION = 'panggilkami-v20';
+const VERSION = 'panggilkami-v21';
 const CORE = [
   './',
   './index.html',

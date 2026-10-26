@@ -148,7 +148,7 @@ function renderHome() {
   const sel = $('#oSvc'), cur = sel.value;
   sel.innerHTML = '<option value="">Pilih Jasa ▼</option>' + SERVICES.map(s => `<option value="${s.id}">${s.name} — ${s.label}</option>`).join('');
   sel.value = cur;
-  const u = me(); if (u) { if (!$('#oName').value) $('#oName').value = u.name; if (!$('#oWa').value && u.wa) $('#oWa').value = u.wa; }
+  const u = me(); if (u) { if (!$('#oName').value && u.role !== 'admin') $('#oName').value = u.name; if (!$('#oWa').value && u.wa) $('#oWa').value = u.wa; }
   updateOrderForm();
   const { n, avg } = ratingInfo();
   $('#heroStars').textContent = n ? '★'.repeat(Math.round(avg)) + '☆'.repeat(5-Math.round(avg)) : '☆☆☆☆☆';
@@ -507,6 +507,7 @@ function reviewModal(id) {
   openModal('Gimana pelayanan kami?', `
     <p class="text-muted-pk small">Pesanan <strong>${svcById(o.svc).name}</strong> #${o.id} telah selesai. Penilaian Anda sangat berarti bagi kami.</p>
     <div class="star-pick text-center mb-3" id="starPick">${[1,2,3,4,5].map(i => `<i class="bi bi-star-fill on" data-act="star" data-n="${i}"></i>`).join('')}</div>
+    <div class="mb-3"><label class="form-label">Nama yang ditampilkan</label><input class="form-control" id="rvName" value="${esc((o.name||u.name||'').split(' ')[0])}" maxlength="30"></div>
     <div class="mb-3"><label class="form-label">Komentar singkat</label><textarea class="form-control" id="rvText" rows="3" maxlength="200" placeholder="Ceritakan pengalaman Anda…"></textarea></div>
     <div class="mb-3"><label class="form-label">Daerah <span class="text-muted-pk fw-normal">(mis. Jebres)</span></label><input class="form-control" id="rvArea" value="${esc(u.area||'')}" maxlength="30"></div>
     <div><label class="form-label">Foto <span class="text-muted-pk fw-normal">(opsional)</span></label><input type="file" class="form-control" id="rvPhoto" accept="image/*"></div>`,
@@ -515,7 +516,7 @@ function reviewModal(id) {
 async function sendReview(id) {
   const all = orders(), o = all.find(x => x.id === id), u = me(); let photo = '';
   const f = $('#rvPhoto').files[0]; if (f) { try { photo = await readImg(f, 700, .7); } catch {} }
-  const ts = tests(); ts.push({ id:uid('T'), oid:id, uid:u.id, name:o.name.split(' ')[0] || u.name, area:$('#rvArea').value.trim(), rating:rvStar, comment:$('#rvText').value.trim(), photo, svc:o.svc, visible:true, at:Date.now() });
+  const ts = tests(); ts.push({ id:uid('T'), oid:id, uid:u.id, name:($('#rvName').value.trim() || o.name.split(' ')[0] || u.name), area:$('#rvArea').value.trim(), rating:rvStar, comment:$('#rvText').value.trim(), photo, svc:o.svc, visible:true, at:Date.now() });
   o.reviewed = true; if (!db.set(K.tests, ts) || !db.set(K.orders, all)) return;
   const us = users(), uu = us.find(x => x.id === u.id); if (uu) { uu.area = $('#rvArea').value.trim(); db.set(K.users, us); }
   closeModal(); toast('Terima kasih! Ulasan Anda telah tersimpan.'); renderView();
@@ -654,10 +655,23 @@ const acts = {
     if (db.set(K.tests, a)) { closeModal(); toast('Ulasan ditambahkan.'); renderAdmin(); } },
   tHide: d => { const a = tests(), t = a.find(x => x.id === d.id); t.visible = t.visible === false; db.set(K.tests, a); renderAdmin(); },
   tDel: d => { if (confirm('Hapus testimoni ini?')) { db.set(K.tests, tests().filter(x => x.id !== d.id)); renderAdmin(); } },
-  tEdit: d => { const t = tests().find(x => x.id === d.id);
-    openModal('Edit Testimoni', `<div class="mb-3"><label class="form-label">Komentar</label><textarea class="form-control" id="teText" rows="3" maxlength="200">${esc(t.comment)}</textarea></div><div class="mb-3"><label class="form-label">Daerah</label><input class="form-control" id="teArea" value="${esc(t.area||'')}"></div>`,
-      `<button class="btn btn-pk" data-act="tSave" data-id="${t.id}">Simpan</button>`); },
-  tSave: d => { const a = tests(), t = a.find(x => x.id === d.id); t.comment = $('#teText').value.trim(); t.area = $('#teArea').value.trim(); db.set(K.tests, a); closeModal(); renderAdmin(); },
+  tEdit: d => { const t = tests().find(x => x.id === d.id), dt = new Date(t.at || Date.now()), p = n => String(n).padStart(2, '0'),
+      dv = `${dt.getFullYear()}-${p(dt.getMonth()+1)}-${p(dt.getDate())}T${p(dt.getHours())}:${p(dt.getMinutes())}`;
+    openModal('Edit Testimoni', `<div class="mb-3"><label class="form-label">Nama pelanggan</label><input class="form-control" id="teName" value="${esc(t.name||'')}" maxlength="30"></div>
+      <div class="mb-3"><label class="form-label">Daerah</label><input class="form-control" id="teArea" value="${esc(t.area||'')}" maxlength="30"></div>
+      <div class="mb-3"><label class="form-label">Jasa yang dipakai</label><select class="form-select" id="teSvc">${SERVICES.map(s => `<option value="${s.id}" ${s.id===t.svc?'selected':''}>${s.name}</option>`).join('')}</select></div>
+      <div class="mb-3"><label class="form-label">Bintang</label><select class="form-select" id="teStar">${[5,4,3,2,1].map(n => `<option ${n===Number(t.rating)?'selected':''}>${n}</option>`).join('')}</select></div>
+      <div class="mb-3"><label class="form-label">Tanggal &amp; jam</label><input type="datetime-local" class="form-control" id="teAt" value="${dv}"></div>
+      <div class="mb-3"><label class="form-label">Komentar</label><textarea class="form-control" id="teText" rows="3" maxlength="200">${esc(t.comment)}</textarea></div>
+      ${t.photo ? '<label class="form-check"><input type="checkbox" class="form-check-input" id="teNoPhoto"> <span class="form-check-label">Hapus foto</span></label>' : ''}
+      <div class="text-danger small" id="teErr"></div>`,
+      `<button class="btn btn-outline-pk" data-bs-dismiss="modal">Batal</button><button class="btn btn-pk" data-act="tSave" data-id="${t.id}">Simpan</button>`); },
+  tSave: d => { const a = tests(), t = a.find(x => x.id === d.id), n = $('#teName').value.trim(), c = $('#teText').value.trim();
+    if (n.length < 2 || c.length < 3) { $('#teErr').textContent = 'Nama dan komentar wajib diisi.'; return; }
+    t.name = n; t.area = $('#teArea').value.trim(); t.svc = $('#teSvc').value; t.rating = Number($('#teStar').value); t.comment = c;
+    const at = new Date($('#teAt').value).getTime(); if (!isNaN(at)) t.at = at;
+    if ($('#teNoPhoto')?.checked) t.photo = '';
+    if (db.set(K.tests, a)) { closeModal(); toast('Testimoni diperbarui.'); renderAdmin(); } },
   delUser: d => { if (confirm('Hapus pengguna ini?')) { db.set(K.users, users().filter(x => x.id !== d.id)); renderAdmin(); } },
   saveQris: () => { const p = $('#qrisText').value.trim();
     if (!/^000201/.test(p) || !p.includes('ID.CO.QRIS.WWW') || !crcOk(p)) { toast('Kode QRIS tidak valid (format atau CRC salah).'); return; }
